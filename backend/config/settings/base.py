@@ -88,11 +88,11 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "json",
+            "filters": ["request_id"],
         },
     },
     "root": {
         "handlers": ["console"],
         "level": "INFO",
-        "filters": ["request_id"],
     },
 }
