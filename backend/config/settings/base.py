@@ -24,6 +24,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "config.logging_utils.RequestIDMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -73,3 +74,25 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "request_id": {"()": "config.logging_utils.RequestIDFilter"},
+    },
+    "formatters": {
+        "json": {"()": "config.logging_utils.JSONFormatter"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+        "filters": ["request_id"],
+    },
+}
