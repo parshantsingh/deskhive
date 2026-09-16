@@ -15,6 +15,10 @@ class Organization(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def owner(self):
+        return self.users.filter(role=User.Role.OWNER).first()
+
 
 class User(AbstractUser):
     class Role(models.TextChoices):
@@ -34,10 +38,6 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
-
-    @property
-    def is_org_owner(self):
-        return self.role == User.Role.OWNER
 
 
 class APIKey(models.Model):
