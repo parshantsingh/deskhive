@@ -34,3 +34,24 @@ class RegisterSerializer(serializers.Serializer):
             organization=organization,
             role=User.Role.OWNER,
         )
+
+
+class InviteMemberSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    role = serializers.ChoiceField(choices=[User.Role.ADMIN, User.Role.AGENT, User.Role.CUSTOMER])
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("A user with this username already exists.")
+        return value
+
+    def create(self, validated_data):
+        return User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=validated_data["password"],
+            organization=self.context["organization"],
+            role=validated_data["role"],
+        )
