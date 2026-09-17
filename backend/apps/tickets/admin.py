@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, SLAPolicy, Tag
+from .models import Category, SLAPolicy, Tag, Ticket
 
 
 @admin.register(Category)
@@ -22,3 +22,18 @@ class SLAPolicyAdmin(admin.ModelAdmin):
         "response_time_minutes",
         "resolution_time_minutes",
     )
+
+
+@admin.register(Ticket)
+class TicketAdmin(admin.ModelAdmin):
+    list_display = (
+        "subject",
+        "organization",
+        "status",
+        "priority",
+        "assignee",
+        "due_at",
+        "created_at",
+    )
+    list_filter = ("status", "priority")
+    search_fields = ("subject", "description")

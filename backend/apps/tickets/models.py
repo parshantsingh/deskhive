@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.db import models
 
 from apps.accounts.models import Organization
@@ -75,3 +76,58 @@ class SLAPolicy(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_priority_display()})"
+
+
+class Ticket(models.Model):
+    class Status(models.TextChoices):
+        OPEN = "open", "Open"
+        PENDING = "pending", "Pending"
+        RESOLVED = "resolved", "Resolved"
+        CLOSED = "closed", "Closed"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="tickets")
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        related_name="tickets",
+        null=True,
+        blank=True,
+    )
+    tags = models.ManyToManyField(Tag, related_name="tickets", blank=True)
+    requester = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="tickets_requested",
+        null=True,
+    )
+    assignee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="tickets_assigned",
+        null=True,
+        blank=True,
+    )
+    subject = models.CharField(max_length=255)
+    description = models.TextField()
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.OPEN)
+    priority = models.CharField(max_length=10, choices=Priority.choices, default=Priority.MEDIUM)
+    due_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="SLA deadline, snapshotted from the matching SLAPolicy at creation time.",
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["organization", "status"], name="ticket_org_status_idx"),
+            models.Index(fields=["organization", "assignee"], name="ticket_org_assignee_idx"),
+            models.Index(fields=["organization", "-created_at"], name="ticket_org_created_idx"),
+        ]
+
+    def __str__(self):
+        return self.subject
