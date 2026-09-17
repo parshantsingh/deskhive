@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "drf_yasg",
     "apps.accounts",
 ]
 
@@ -77,6 +78,26 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
+
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "JWT auth for logged-in users. Example: 'Bearer {access_token}'",
+        },
+        "Api-Key": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "API key auth for third-party integrations. Example: 'Api-Key {key}'",
+        },
+    },
+    "USE_SESSION_AUTH": False,
+}
+
+SWAGGER_USE_COMPAT_RENDERERS = False
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
