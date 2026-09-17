@@ -27,6 +27,7 @@ class Category(models.Model):
             )
         ]
         verbose_name_plural = "categories"
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -42,6 +43,7 @@ class Tag(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["organization", "name"], name="unique_tag_name_per_org")
         ]
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -69,6 +71,7 @@ class SLAPolicy(models.Model):
             )
         ]
         verbose_name_plural = "SLA policies"
+        ordering = ["priority"]
 
     def __str__(self):
         return f"{self.name} ({self.get_priority_display()})"
