@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_yasg",
     "apps.accounts",
+    "apps.tickets",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
