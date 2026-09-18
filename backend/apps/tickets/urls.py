@@ -5,6 +5,7 @@ from .views import (
     CategoryViewSet,
     SLAPolicyViewSet,
     TagViewSet,
+    TicketAttachmentListCreateView,
     TicketCommentListCreateView,
     TicketViewSet,
 )
@@ -20,5 +21,10 @@ urlpatterns = router.urls + [
         "tickets/<uuid:ticket_id>/comments/",
         TicketCommentListCreateView.as_view(),
         name="ticket-comments",
+    ),
+    path(
+        "tickets/<uuid:ticket_id>/attachments/",
+        TicketAttachmentListCreateView.as_view(),
+        name="ticket-attachments",
     ),
 ]

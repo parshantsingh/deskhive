@@ -163,3 +163,32 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"Comment on {self.ticket_id}"
+
+
+def ticket_attachment_path(instance, filename):
+    return f"tickets/{instance.ticket_id}/{filename}"
+
+
+class Attachment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name="attachments"
+    )
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="attachments")
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="attachments",
+    )
+    file = models.FileField(upload_to=ticket_attachment_path)
+    original_filename = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=100)
+    size_bytes = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return self.original_filename
