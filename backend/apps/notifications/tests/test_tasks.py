@@ -3,50 +3,11 @@ import uuid
 import pytest
 from django.core import mail
 
-from apps.accounts.models import Organization, User
 from apps.notifications.tasks import (
     send_new_comment_notification,
     send_ticket_created_notifications,
 )
 from apps.tickets.models import Comment, Ticket
-
-
-@pytest.fixture
-def org():
-    return Organization.objects.create(name="Acme", slug="acme")
-
-
-@pytest.fixture
-def owner(org):
-    return User.objects.create_user(
-        username="owner1",
-        password="whatever123",
-        organization=org,
-        role=User.Role.OWNER,
-        email="owner1@acme.test",
-    )
-
-
-@pytest.fixture
-def agent(org):
-    return User.objects.create_user(
-        username="agent1",
-        password="whatever123",
-        organization=org,
-        role=User.Role.AGENT,
-        email="agent1@acme.test",
-    )
-
-
-@pytest.fixture
-def customer(org):
-    return User.objects.create_user(
-        username="cust1",
-        password="whatever123",
-        organization=org,
-        role=User.Role.CUSTOMER,
-        email="cust1@acme.test",
-    )
 
 
 @pytest.mark.django_db

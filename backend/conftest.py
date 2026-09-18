@@ -1,5 +1,45 @@
 import pytest
 
+from apps.accounts.models import Organization, User
+
+
+@pytest.fixture
+def org():
+    return Organization.objects.create(name="Acme", slug="acme")
+
+
+@pytest.fixture
+def owner(org):
+    return User.objects.create_user(
+        username="owner1",
+        password="whatever123",
+        organization=org,
+        role=User.Role.OWNER,
+        email="owner1@acme.test",
+    )
+
+
+@pytest.fixture
+def agent(org):
+    return User.objects.create_user(
+        username="agent1",
+        password="whatever123",
+        organization=org,
+        role=User.Role.AGENT,
+        email="agent1@acme.test",
+    )
+
+
+@pytest.fixture
+def customer(org):
+    return User.objects.create_user(
+        username="cust1",
+        password="whatever123",
+        organization=org,
+        role=User.Role.CUSTOMER,
+        email="cust1@acme.test",
+    )
+
 
 @pytest.fixture(autouse=True)
 def _use_tmp_media_root(settings, tmp_path):

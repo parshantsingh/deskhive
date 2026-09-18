@@ -4,25 +4,9 @@ import pytest
 from django.core import mail
 from django.utils import timezone
 
-from apps.accounts.models import Organization, User
+from apps.accounts.models import User
 from apps.tickets.models import Ticket
 from apps.tickets.tasks import check_sla_breaches
-
-
-@pytest.fixture
-def org():
-    return Organization.objects.create(name="Acme", slug="acme")
-
-
-@pytest.fixture
-def owner(org):
-    return User.objects.create_user(
-        username="owner1",
-        password="whatever123",
-        organization=org,
-        role=User.Role.OWNER,
-        email="owner1@acme.test",
-    )
 
 
 @pytest.mark.django_db

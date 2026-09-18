@@ -9,22 +9,6 @@ from apps.notifications.tasks import send_weekly_digest
 from apps.tickets.models import Ticket
 
 
-@pytest.fixture
-def org():
-    return Organization.objects.create(name="Acme", slug="acme")
-
-
-@pytest.fixture
-def owner(org):
-    return User.objects.create_user(
-        username="owner1",
-        password="whatever123",
-        organization=org,
-        role=User.Role.OWNER,
-        email="owner1@acme.test",
-    )
-
-
 @pytest.mark.django_db
 def test_digest_counts_this_weeks_activity(org, owner):
     now = timezone.now()

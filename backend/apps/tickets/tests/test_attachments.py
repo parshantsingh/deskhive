@@ -2,7 +2,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
 
-from apps.accounts.models import Organization, User
+from apps.accounts.models import User
 from apps.tickets.models import Attachment, Ticket
 
 
@@ -11,25 +11,6 @@ def _login(client, username, password):
         "/api/v1/auth/token/", {"username": username, "password": password}, format="json"
     )
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
-
-
-@pytest.fixture
-def org():
-    return Organization.objects.create(name="Acme", slug="acme")
-
-
-@pytest.fixture
-def owner(org):
-    return User.objects.create_user(
-        username="owner1", password="whatever123", organization=org, role=User.Role.OWNER
-    )
-
-
-@pytest.fixture
-def customer(org):
-    return User.objects.create_user(
-        username="cust1", password="whatever123", organization=org, role=User.Role.CUSTOMER
-    )
 
 
 @pytest.fixture
