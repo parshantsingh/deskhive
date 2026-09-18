@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "apps.accounts",
     "apps.tickets",
+    "apps.notifications",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -84,6 +85,28 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
+
+# Celery — Redis doubles as both the message broker and the result backend,
+# so no extra service is needed beyond what's already running.
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_TIMEZONE = TIME_ZONE
+# Explicitly JSON, not Celery's old pickle default: pickle deserializes
+# arbitrary Python objects, which is a real remote-code-execution risk if
+# anything untrusted ever reaches the broker.
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+
+# EMAIL_BACKEND is deprecated as of Django 6.1 in favor of MAILERS (a
+# DATABASES/CACHES-style multi-backend config) — using it directly would
+# already emit a RemovedInDjango70Warning.
+MAILERS = {
+    "default": {
+        "BACKEND": env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"),
+    },
+}
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@deskhive.example.com")
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {

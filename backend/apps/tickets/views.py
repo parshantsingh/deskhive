@@ -1,3 +1,5 @@
+import logging
+
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
@@ -8,6 +10,7 @@ from apps.accounts.models import User
 from apps.accounts.permissions import IsAgentOrAbove, IsOwnerOrAdmin
 from apps.common.mixins import OrganizationScopedMixin
 from apps.common.permissions import HasOrganization
+from apps.notifications.tasks import send_new_comment_notification
 
 from .models import Category, SLAPolicy, Tag, Ticket
 from .serializers import (
@@ -18,6 +21,8 @@ from .serializers import (
     TagSerializer,
     TicketSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class CategoryViewSet(OrganizationScopedMixin, ModelViewSet):
@@ -97,7 +102,12 @@ class TicketCommentListCreateView(TicketChildListCreateView):
         if serializer.validated_data.get("is_internal_note") and user.role == User.Role.CUSTOMER:
             raise PermissionDenied("Customers cannot create internal notes.")
 
-        serializer.save(ticket=ticket, organization=user.organization, author=user)
+        comment = serializer.save(ticket=ticket, organization=user.organization, author=user)
+
+        try:
+            send_new_comment_notification.delay(str(comment.id))
+        except Exception:
+            logger.exception("Failed to enqueue notification for comment %s", comment.id)
 
 
 class TicketAttachmentListCreateView(TicketChildListCreateView):
