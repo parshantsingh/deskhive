@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Comment, SLAPolicy, Tag, Ticket
+from .models import Attachment, Category, Comment, SLAPolicy, Tag, Ticket
 
 
 @admin.register(Category)
@@ -43,3 +43,8 @@ class TicketAdmin(admin.ModelAdmin):
 class CommentAdmin(admin.ModelAdmin):
     list_display = ("ticket", "author", "is_internal_note", "created_at")
     list_filter = ("is_internal_note",)
+
+
+@admin.register(Attachment)
+class AttachmentAdmin(admin.ModelAdmin):
+    list_display = ("original_filename", "ticket", "uploaded_by", "size_bytes", "created_at")

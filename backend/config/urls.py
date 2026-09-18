@@ -15,6 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from drf_yasg import openapi
@@ -46,3 +48,7 @@ urlpatterns = [
     ),
     path("api/redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
 ]
+
+if settings.DEBUG:
+    # Never served this way in production — Nginx/S3 handles media there (Phase 8/11).
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
