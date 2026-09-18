@@ -56,11 +56,17 @@ class TicketViewSet(OrganizationScopedMixin, ModelViewSet):
         return queryset
 
 
-class TicketCommentListCreateView(generics.ListCreateAPIView):
-    serializer_class = CommentSerializer
+class TicketChildListCreateView(generics.ListCreateAPIView):
+    """Base for any resource nested under a single ticket (comments, attachments).
+
+    Centralizes the "customer only touches their own ticket" rule in one place,
+    so it can't be added correctly on one nested endpoint and forgotten on the
+    next one.
+    """
+
     permission_classes = [HasOrganization]
 
-    def _get_ticket(self):
+    def get_ticket(self):
         tickets = Ticket.objects.filter(organization=self.request.user.organization)
         ticket = get_object_or_404(tickets, id=self.kwargs["ticket_id"])
 
@@ -72,15 +78,19 @@ class TicketCommentListCreateView(generics.ListCreateAPIView):
 
         return ticket
 
+
+class TicketCommentListCreateView(TicketChildListCreateView):
+    serializer_class = CommentSerializer
+
     def get_queryset(self):
-        ticket = self._get_ticket()
+        ticket = self.get_ticket()
         queryset = ticket.comments.all()
         if self.request.user.role == User.Role.CUSTOMER:
             queryset = queryset.filter(is_internal_note=False)
         return queryset
 
     def perform_create(self, serializer):
-        ticket = self._get_ticket()
+        ticket = self.get_ticket()
         user = self.request.user
 
         if serializer.validated_data.get("is_internal_note") and user.role == User.Role.CUSTOMER:
