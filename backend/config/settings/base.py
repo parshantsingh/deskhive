@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -97,6 +98,20 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+
+# Celery Beat's periodic schedule. A static dict is enough for this project —
+# django-celery-beat exists for teams that need to edit schedules at runtime
+# via the Django admin, without a deploy, which isn't a need here.
+CELERY_BEAT_SCHEDULE = {
+    "check-sla-breaches": {
+        "task": "apps.tickets.tasks.check_sla_breaches",
+        "schedule": 300.0,  # every 5 minutes
+    },
+    "send-weekly-digest": {
+        "task": "apps.notifications.tasks.send_weekly_digest",
+        "schedule": crontab(day_of_week="monday", hour=8, minute=0),
+    },
+}
 
 # EMAIL_BACKEND is deprecated as of Django 6.1 in favor of MAILERS (a
 # DATABASES/CACHES-style multi-backend config) — using it directly would
