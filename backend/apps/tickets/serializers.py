@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Category, SLAPolicy, Tag, Ticket
+from .models import Category, Comment, SLAPolicy, Tag, Ticket
 
 User = get_user_model()
 
@@ -129,3 +129,10 @@ class TicketSerializer(serializers.ModelSerializer):
         if tags is not None:
             ticket.tags.set(tags)
         return ticket
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ["id", "author", "body", "is_internal_note", "created_at"]
+        read_only_fields = ["id", "author", "created_at"]

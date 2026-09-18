@@ -1,11 +1,22 @@
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+from rest_framework import generics
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.viewsets import ModelViewSet
 
+from apps.accounts.models import User
 from apps.accounts.permissions import IsAgentOrAbove, IsOwnerOrAdmin
 from apps.common.mixins import OrganizationScopedMixin
 from apps.common.permissions import HasOrganization
 
 from .models import Category, SLAPolicy, Tag, Ticket
-from .serializers import CategorySerializer, SLAPolicySerializer, TagSerializer, TicketSerializer
+from .serializers import (
+    CategorySerializer,
+    CommentSerializer,
+    SLAPolicySerializer,
+    TagSerializer,
+    TicketSerializer,
+)
 
 
 class CategoryViewSet(OrganizationScopedMixin, ModelViewSet):
@@ -43,3 +54,36 @@ class TicketViewSet(OrganizationScopedMixin, ModelViewSet):
         if user.role == user.Role.CUSTOMER:
             return queryset.filter(requester=user)
         return queryset
+
+
+class TicketCommentListCreateView(generics.ListCreateAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [HasOrganization]
+
+    def _get_ticket(self):
+        tickets = Ticket.objects.filter(organization=self.request.user.organization)
+        ticket = get_object_or_404(tickets, id=self.kwargs["ticket_id"])
+
+        user = self.request.user
+        if user.role == User.Role.CUSTOMER and ticket.requester_id != user.id:
+            # Same "don't reveal existence" principle as OrganizationScopedMixin:
+            # a customer poking at someone else's ticket ID sees a plain 404.
+            raise Http404
+
+        return ticket
+
+    def get_queryset(self):
+        ticket = self._get_ticket()
+        queryset = ticket.comments.all()
+        if self.request.user.role == User.Role.CUSTOMER:
+            queryset = queryset.filter(is_internal_note=False)
+        return queryset
+
+    def perform_create(self, serializer):
+        ticket = self._get_ticket()
+        user = self.request.user
+
+        if serializer.validated_data.get("is_internal_note") and user.role == User.Role.CUSTOMER:
+            raise PermissionDenied("Customers cannot create internal notes.")
+
+        serializer.save(ticket=ticket, organization=user.organization, author=user)

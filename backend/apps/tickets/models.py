@@ -131,3 +131,35 @@ class Ticket(models.Model):
 
     def __str__(self):
         return self.subject
+
+
+class Comment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # organization is denormalized here (also reachable via ticket.organization)
+    # so this model can reuse the same OrganizationScopedMixin as every other
+    # tenant-scoped model, and so tenant filtering never requires a join.
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name="comments"
+    )
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="comments",
+    )
+    body = models.TextField()
+    is_internal_note = models.BooleanField(
+        default=False,
+        help_text="Internal notes are visible to agents/admins/owners only, never customers.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        indexes = [
+            models.Index(fields=["ticket", "created_at"], name="comment_ticket_created_idx"),
+        ]
+
+    def __str__(self):
+        return f"Comment on {self.ticket_id}"
