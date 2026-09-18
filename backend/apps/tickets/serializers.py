@@ -2,9 +2,22 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Category, Comment, SLAPolicy, Tag, Ticket
+from .models import Attachment, Category, Comment, SLAPolicy, Tag, Ticket
 
 User = get_user_model()
+
+MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
+ALLOWED_ATTACHMENT_CONTENT_TYPES = {
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/webp",
+    "application/pdf",
+    "text/plain",
+    "text/csv",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -136,3 +149,47 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ["id", "author", "body", "is_internal_note", "created_at"]
         read_only_fields = ["id", "author", "created_at"]
+
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(write_only=True)
+
+    class Meta:
+        model = Attachment
+        fields = [
+            "id",
+            "uploaded_by",
+            "file",
+            "original_filename",
+            "content_type",
+            "size_bytes",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "uploaded_by",
+            "original_filename",
+            "content_type",
+            "size_bytes",
+            "created_at",
+        ]
+
+    def validate_file(self, value):
+        if value.size > MAX_ATTACHMENT_SIZE_BYTES:
+            raise serializers.ValidationError(
+                f"File too large ({value.size} bytes). Max size is "
+                f"{MAX_ATTACHMENT_SIZE_BYTES} bytes."
+            )
+        if value.content_type not in ALLOWED_ATTACHMENT_CONTENT_TYPES:
+            raise serializers.ValidationError(f"Unsupported file type: {value.content_type}")
+        return value
+
+    def create(self, validated_data):
+        file_obj = validated_data.pop("file")
+        return Attachment.objects.create(
+            file=file_obj,
+            original_filename=file_obj.name,
+            content_type=file_obj.content_type,
+            size_bytes=file_obj.size,
+            **validated_data,
+        )

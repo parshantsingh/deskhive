@@ -11,6 +11,7 @@ from apps.common.permissions import HasOrganization
 
 from .models import Category, SLAPolicy, Tag, Ticket
 from .serializers import (
+    AttachmentSerializer,
     CategorySerializer,
     CommentSerializer,
     SLAPolicySerializer,
@@ -97,3 +98,18 @@ class TicketCommentListCreateView(TicketChildListCreateView):
             raise PermissionDenied("Customers cannot create internal notes.")
 
         serializer.save(ticket=ticket, organization=user.organization, author=user)
+
+
+class TicketAttachmentListCreateView(TicketChildListCreateView):
+    serializer_class = AttachmentSerializer
+
+    def get_queryset(self):
+        return self.get_ticket().attachments.all()
+
+    def perform_create(self, serializer):
+        ticket = self.get_ticket()
+        serializer.save(
+            ticket=ticket,
+            organization=self.request.user.organization,
+            uploaded_by=self.request.user,
+        )
