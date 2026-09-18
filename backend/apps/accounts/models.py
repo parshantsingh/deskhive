@@ -1,16 +1,15 @@
 import hashlib
 import secrets
-import uuid
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from apps.common.models import TimestampedModel, UUIDPrimaryKeyModel
 
-class Organization(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+class Organization(UUIDPrimaryKeyModel, TimestampedModel):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
@@ -40,15 +39,13 @@ class User(AbstractUser):
         return self.username
 
 
-class APIKey(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class APIKey(UUIDPrimaryKeyModel, TimestampedModel):
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="api_keys"
     )
     name = models.CharField(max_length=255)
     prefix = models.CharField(max_length=8, unique=True, editable=False)
     hashed_key = models.CharField(max_length=64, editable=False)
-    created_at = models.DateTimeField(auto_now_add=True)
     last_used_at = models.DateTimeField(null=True, blank=True)
     revoked_at = models.DateTimeField(null=True, blank=True)
 

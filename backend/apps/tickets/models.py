@@ -1,9 +1,8 @@
-import uuid
-
 from django.conf import settings
 from django.db import models
 
 from apps.accounts.models import Organization
+from apps.common.models import TimestampedModel, UUIDPrimaryKeyModel
 
 
 class Priority(models.TextChoices):
@@ -13,13 +12,11 @@ class Priority(models.TextChoices):
     URGENT = "urgent", "Urgent"
 
 
-class Category(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class Category(UUIDPrimaryKeyModel, TimestampedModel):
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="categories"
     )
     name = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
@@ -34,11 +31,9 @@ class Category(models.Model):
         return self.name
 
 
-class Tag(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class Tag(UUIDPrimaryKeyModel, TimestampedModel):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="tags")
     name = models.CharField(max_length=50)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
@@ -50,8 +45,7 @@ class Tag(models.Model):
         return self.name
 
 
-class SLAPolicy(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class SLAPolicy(UUIDPrimaryKeyModel, TimestampedModel):
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="sla_policies"
     )
@@ -63,7 +57,6 @@ class SLAPolicy(models.Model):
     resolution_time_minutes = models.PositiveIntegerField(
         help_text="How quickly the ticket must be resolved, in minutes."
     )
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
@@ -78,14 +71,13 @@ class SLAPolicy(models.Model):
         return f"{self.name} ({self.get_priority_display()})"
 
 
-class Ticket(models.Model):
+class Ticket(UUIDPrimaryKeyModel, TimestampedModel):
     class Status(models.TextChoices):
         OPEN = "open", "Open"
         PENDING = "pending", "Pending"
         RESOLVED = "resolved", "Resolved"
         CLOSED = "closed", "Closed"
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="tickets")
     category = models.ForeignKey(
         Category,
@@ -124,7 +116,6 @@ class Ticket(models.Model):
         help_text="Set once, the first time the SLA scanner detects this ticket "
         "passed its due_at — guards against re-notifying on every scan.",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -140,8 +131,7 @@ class Ticket(models.Model):
         return self.subject
 
 
-class Comment(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class Comment(UUIDPrimaryKeyModel, TimestampedModel):
     # organization is denormalized here (also reachable via ticket.organization)
     # so this model can reuse the same OrganizationScopedMixin as every other
     # tenant-scoped model, and so tenant filtering never requires a join.
@@ -160,7 +150,6 @@ class Comment(models.Model):
         default=False,
         help_text="Internal notes are visible to agents/admins/owners only, never customers.",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["created_at"]
@@ -176,8 +165,7 @@ def ticket_attachment_path(instance, filename):
     return f"tickets/{instance.ticket_id}/{filename}"
 
 
-class Attachment(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class Attachment(UUIDPrimaryKeyModel, TimestampedModel):
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="attachments"
     )
@@ -192,7 +180,6 @@ class Attachment(models.Model):
     original_filename = models.CharField(max_length=255)
     content_type = models.CharField(max_length=100)
     size_bytes = models.PositiveIntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["created_at"]
