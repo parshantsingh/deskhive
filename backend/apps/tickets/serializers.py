@@ -1,9 +1,14 @@
+import logging
+
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.notifications.tasks import send_ticket_created_notifications
+
 from .models import Attachment, Category, Comment, SLAPolicy, Tag, Ticket
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
@@ -129,6 +134,15 @@ class TicketSerializer(serializers.ModelSerializer):
         ticket = Ticket.objects.create(**validated_data)
         if tags:
             ticket.tags.set(tags)
+
+        try:
+            send_ticket_created_notifications.delay(str(ticket.id))
+        except Exception:
+            # A broker hiccup must never block someone from filing a ticket —
+            # the ticket itself is already saved; losing the notification is
+            # far preferable to losing (or failing) the ticket.
+            logger.exception("Failed to enqueue notification for ticket %s", ticket.id)
+
         return ticket
 
     def update(self, instance, validated_data):
