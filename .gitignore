@@ -19,6 +19,9 @@ db.sqlite3-journal
 media/
 staticfiles/
 
+# Celery Beat's local schedule state
+celerybeat-schedule*
+
 # Env files
 .env
 .env.*

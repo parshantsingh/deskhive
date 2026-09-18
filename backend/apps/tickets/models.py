@@ -118,6 +118,12 @@ class Ticket(models.Model):
         help_text="SLA deadline, snapshotted from the matching SLAPolicy at creation time.",
     )
     resolved_at = models.DateTimeField(null=True, blank=True)
+    sla_breached_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Set once, the first time the SLA scanner detects this ticket "
+        "passed its due_at — guards against re-notifying on every scan.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -127,6 +133,7 @@ class Ticket(models.Model):
             models.Index(fields=["organization", "status"], name="ticket_org_status_idx"),
             models.Index(fields=["organization", "assignee"], name="ticket_org_assignee_idx"),
             models.Index(fields=["organization", "-created_at"], name="ticket_org_created_idx"),
+            models.Index(fields=["due_at", "sla_breached_at"], name="ticket_due_breached_idx"),
         ]
 
     def __str__(self):
