@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "apps.accounts",
     "apps.tickets",
+    "apps.notifications",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -97,7 +98,14 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 
-EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+# EMAIL_BACKEND is deprecated as of Django 6.1 in favor of MAILERS (a
+# DATABASES/CACHES-style multi-backend config) — using it directly would
+# already emit a RemovedInDjango70Warning.
+MAILERS = {
+    "default": {
+        "BACKEND": env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"),
+    },
+}
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@deskhive.example.com")
 
 SWAGGER_SETTINGS = {
