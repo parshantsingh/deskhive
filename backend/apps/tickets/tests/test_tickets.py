@@ -15,32 +15,6 @@ def _login(client, username, password):
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
 
 
-@pytest.fixture
-def org():
-    return Organization.objects.create(name="Acme", slug="acme")
-
-
-@pytest.fixture
-def owner(org):
-    return User.objects.create_user(
-        username="owner1", password="whatever123", organization=org, role=User.Role.OWNER
-    )
-
-
-@pytest.fixture
-def agent(org):
-    return User.objects.create_user(
-        username="agent1", password="whatever123", organization=org, role=User.Role.AGENT
-    )
-
-
-@pytest.fixture
-def customer(org):
-    return User.objects.create_user(
-        username="cust1", password="whatever123", organization=org, role=User.Role.CUSTOMER
-    )
-
-
 @pytest.mark.django_db
 def test_customer_can_create_ticket_and_becomes_requester(org, customer):
     client = APIClient()

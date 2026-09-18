@@ -13,25 +13,6 @@ def _login(client, username, password):
 
 
 @pytest.fixture
-def org():
-    return Organization.objects.create(name="Acme", slug="acme")
-
-
-@pytest.fixture
-def owner(org):
-    return User.objects.create_user(
-        username="owner1", password="whatever123", organization=org, role=User.Role.OWNER
-    )
-
-
-@pytest.fixture
-def customer(org):
-    return User.objects.create_user(
-        username="cust1", password="whatever123", organization=org, role=User.Role.CUSTOMER
-    )
-
-
-@pytest.fixture
 def ticket(org, customer):
     return Ticket.objects.create(
         organization=org, requester=customer, subject="Help", description="..."
