@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, SLAPolicy, Tag, Ticket
+from .models import Category, Comment, SLAPolicy, Tag, Ticket
 
 
 @admin.register(Category)
@@ -37,3 +37,9 @@ class TicketAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "priority")
     search_fields = ("subject", "description")
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ("ticket", "author", "is_internal_note", "created_at")
+    list_filter = ("is_internal_note",)
