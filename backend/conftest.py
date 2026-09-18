@@ -11,3 +11,16 @@ def _use_tmp_media_root(settings, tmp_path):
     filesystem, not in the database.
     """
     settings.MEDIA_ROOT = tmp_path
+
+
+@pytest.fixture(autouse=True)
+def _run_celery_tasks_eagerly(settings):
+    """Run Celery tasks inline, synchronously, during tests.
+
+    Without this, every `.delay(...)` call would try to reach a real Redis
+    broker and queue the task for a real worker to pick up later — tests
+    would either hang waiting for a worker that isn't running, or pass
+    without ever actually proving the task's logic works.
+    """
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
