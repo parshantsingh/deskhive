@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 
 from apps.accounts.models import Organization
-from apps.common.models import TimestampedModel, UUIDPrimaryKeyModel
+from apps.common.models import BaseModel
 
 
 class Priority(models.TextChoices):
@@ -12,7 +12,7 @@ class Priority(models.TextChoices):
     URGENT = "urgent", "Urgent"
 
 
-class Category(UUIDPrimaryKeyModel, TimestampedModel):
+class Category(BaseModel):
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="categories"
     )
@@ -31,7 +31,7 @@ class Category(UUIDPrimaryKeyModel, TimestampedModel):
         return self.name
 
 
-class Tag(UUIDPrimaryKeyModel, TimestampedModel):
+class Tag(BaseModel):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="tags")
     name = models.CharField(max_length=50)
 
@@ -45,7 +45,7 @@ class Tag(UUIDPrimaryKeyModel, TimestampedModel):
         return self.name
 
 
-class SLAPolicy(UUIDPrimaryKeyModel, TimestampedModel):
+class SLAPolicy(BaseModel):
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="sla_policies"
     )
@@ -71,7 +71,7 @@ class SLAPolicy(UUIDPrimaryKeyModel, TimestampedModel):
         return f"{self.name} ({self.get_priority_display()})"
 
 
-class Ticket(UUIDPrimaryKeyModel, TimestampedModel):
+class Ticket(BaseModel):
     class Status(models.TextChoices):
         OPEN = "open", "Open"
         PENDING = "pending", "Pending"
@@ -116,7 +116,6 @@ class Ticket(UUIDPrimaryKeyModel, TimestampedModel):
         help_text="Set once, the first time the SLA scanner detects this ticket "
         "passed its due_at — guards against re-notifying on every scan.",
     )
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -131,7 +130,7 @@ class Ticket(UUIDPrimaryKeyModel, TimestampedModel):
         return self.subject
 
 
-class Comment(UUIDPrimaryKeyModel, TimestampedModel):
+class Comment(BaseModel):
     # organization is denormalized here (also reachable via ticket.organization)
     # so this model can reuse the same OrganizationScopedMixin as every other
     # tenant-scoped model, and so tenant filtering never requires a join.
@@ -165,7 +164,7 @@ def ticket_attachment_path(instance, filename):
     return f"tickets/{instance.ticket_id}/{filename}"
 
 
-class Attachment(UUIDPrimaryKeyModel, TimestampedModel):
+class Attachment(BaseModel):
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="attachments"
     )
