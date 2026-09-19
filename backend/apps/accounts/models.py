@@ -4,10 +4,10 @@ import secrets
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from apps.common.models import TimestampedModel, UUIDPrimaryKeyModel
+from apps.common.models import BaseModel
 
 
-class Organization(UUIDPrimaryKeyModel, TimestampedModel):
+class Organization(BaseModel):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
 
@@ -39,7 +39,7 @@ class User(AbstractUser):
         return self.username
 
 
-class APIKey(UUIDPrimaryKeyModel, TimestampedModel):
+class APIKey(BaseModel):
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="api_keys"
     )
