@@ -1,4 +1,5 @@
 import pytest
+from channels.layers import channel_layers
 
 from apps.accounts.models import Organization, User
 
@@ -64,3 +65,16 @@ def _run_celery_tasks_eagerly(settings):
     """
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+
+@pytest.fixture(autouse=True)
+def _use_in_memory_channel_layer(settings):
+    """Keep WebSocket tests off Redis, and isolated from each other.
+
+    The in-memory layer lives inside the test process, so tests neither need
+    a running Redis nor can they see another test's messages.
+    """
+    settings.CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+    channel_layers.backends = {}
+    yield
+    channel_layers.backends = {}

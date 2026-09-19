@@ -15,17 +15,21 @@ DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 INSTALLED_APPS = [
+    # daphne must precede staticfiles: it makes `runserver` speak ASGI/WebSocket.
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "rest_framework",
     "drf_yasg",
     "apps.accounts",
     "apps.tickets",
     "apps.notifications",
+    "apps.realtime",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -86,6 +90,13 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [REDIS_URL]},
+    },
+}
 
 # Celery — Redis doubles as both the message broker and the result backend,
 # so no extra service is needed beyond what's already running.
