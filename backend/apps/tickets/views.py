@@ -10,6 +10,7 @@ from apps.accounts.permissions import IsAgentOrAbove, IsOwnerOrAdmin
 from apps.common.mixins import OrganizationScopedMixin
 from apps.common.permissions import HasOrganization
 from apps.notifications.tasks import send_new_comment_notification
+from apps.realtime.broadcast import broadcast_comment
 
 from .models import Category, SLAPolicy, Tag, Ticket
 from .selectors import accessible_tickets
@@ -96,6 +97,7 @@ class TicketCommentListCreateView(TicketChildListCreateView):
             raise PermissionDenied("Customers cannot create internal notes.")
 
         comment = serializer.save(ticket=ticket, organization=user.organization, author=user)
+        broadcast_comment(ticket.id, serializer.data, comment.is_internal_note)
 
         try:
             send_new_comment_notification.delay(str(comment.id))
