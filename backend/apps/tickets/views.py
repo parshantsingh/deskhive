@@ -1,6 +1,5 @@
 import logging
 
-from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
@@ -13,6 +12,7 @@ from apps.common.permissions import HasOrganization
 from apps.notifications.tasks import send_new_comment_notification
 
 from .models import Category, SLAPolicy, Tag, Ticket
+from .selectors import accessible_tickets
 from .serializers import (
     AttachmentSerializer,
     CategorySerializer,
@@ -73,16 +73,9 @@ class TicketChildListCreateView(generics.ListCreateAPIView):
     permission_classes = [HasOrganization]
 
     def get_ticket(self):
-        tickets = Ticket.objects.filter(organization=self.request.user.organization)
-        ticket = get_object_or_404(tickets, id=self.kwargs["ticket_id"])
-
-        user = self.request.user
-        if user.role == User.Role.CUSTOMER and ticket.requester_id != user.id:
-            # Same "don't reveal existence" principle as OrganizationScopedMixin:
-            # a customer poking at someone else's ticket ID sees a plain 404.
-            raise Http404
-
-        return ticket
+        # A ticket the user may not see is a plain 404, never a 403 — same
+        # "don't reveal existence" principle as OrganizationScopedMixin.
+        return get_object_or_404(accessible_tickets(self.request.user), id=self.kwargs["ticket_id"])
 
 
 class TicketCommentListCreateView(TicketChildListCreateView):
