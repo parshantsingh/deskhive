@@ -1,5 +1,6 @@
 import pytest
 from channels.layers import channel_layers
+from django.core.cache import caches
 
 from apps.accounts.models import Organization, User
 
@@ -78,3 +79,13 @@ def _use_in_memory_channel_layer(settings):
     channel_layers.backends = {}
     yield
     channel_layers.backends = {}
+
+
+@pytest.fixture(autouse=True)
+def _use_local_memory_cache(settings):
+    # Tests must not read or write the developer's real cache. LocMemCache keeps
+    # its data at module level, so it is emptied explicitly around every test.
+    settings.CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+    caches["default"].clear()
+    yield
+    caches["default"].clear()

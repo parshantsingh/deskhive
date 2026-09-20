@@ -99,6 +99,17 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Django's cache framework on the same Redis server, but its own database
+# number: cache.clear() issues FLUSHDB, which must never be able to wipe the
+# Celery queue that lives in database 0.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("CACHE_URL", default="redis://localhost:6379/1"),
+        "KEY_PREFIX": "deskhive",
+    },
+}
+
 # Celery — Redis doubles as both the message broker and the result backend,
 # so no extra service is needed beyond what's already running.
 CELERY_BROKER_URL = REDIS_URL
