@@ -15,6 +15,7 @@ TENANT_SCOPED_ENDPOINTS = [
     ("get", f"/api/v1/tickets/{SOME_TICKET_ID}/comments/"),
     ("get", f"/api/v1/tickets/{SOME_TICKET_ID}/attachments/"),
     ("post", "/api/v1/announcements/"),
+    ("get", "/api/v1/dashboard/summary/"),
 ]
 
 
