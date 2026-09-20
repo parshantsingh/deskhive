@@ -56,6 +56,10 @@ jobs:
           isort --check-only .
           flake8 .
 
+      - name: Check migrations are up to date
+        working-directory: backend
+        run: python manage.py makemigrations --check --dry-run
+
       - name: Run tests
         working-directory: backend
         run: pytest
