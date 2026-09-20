@@ -3,10 +3,16 @@ from datetime import timedelta
 from django.db.models import Count, Q
 from django.utils import timezone
 
+from apps.common.cache import get_or_compute, invalidate
 from apps.tickets.models import Priority, Ticket
 
 # "Still needs work": tickets in these states count towards workload figures.
 ACTIVE_STATUSES = [Ticket.Status.OPEN, Ticket.Status.PENDING]
+
+# Ticket writes invalidate the entry (see signals.py), so this only bounds how
+# stale the figures that depend on the clock can get: "overdue" changes as time
+# passes with no write to react to.
+SUMMARY_TTL_SECONDS = 300
 
 
 def build_dashboard_summary(organization_id):
@@ -38,3 +44,22 @@ def build_dashboard_summary(organization_id):
         "open_work": {name: counts[name] for name in ("unassigned", "overdue", "urgent")},
         "last_7_days": {"created": counts["created"], "resolved": counts["resolved_recently"]},
     }
+
+
+def summary_cache_key(organization_id):
+    # The version segment lets a change to the payload's shape roll out without
+    # serving old-shaped entries that are still sitting in Redis.
+    return f"dashboard:summary:v1:{organization_id}"
+
+
+def get_dashboard_summary(organization_id):
+    """Cache-aside read. Returns (summary, hit)."""
+    return get_or_compute(
+        summary_cache_key(organization_id),
+        lambda: build_dashboard_summary(organization_id),
+        SUMMARY_TTL_SECONDS,
+    )
+
+
+def invalidate_dashboard_summary(organization_id):
+    invalidate(summary_cache_key(organization_id))
