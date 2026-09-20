@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "apps.tickets",
     "apps.notifications",
     "apps.realtime",
+    "apps.analytics",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
