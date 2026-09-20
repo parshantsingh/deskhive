@@ -121,7 +121,12 @@ class Ticket(BaseModel):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["organization", "status"], name="ticket_org_status_idx"),
-            models.Index(fields=["organization", "assignee"], name="ticket_org_assignee_idx"),
+            # An agent's queue: equality columns first, the sort column last, so
+            # Postgres can walk the index newest-first and stop after one page.
+            models.Index(
+                fields=["organization", "assignee", "status", "-created_at"],
+                name="ticket_agent_queue_idx",
+            ),
             models.Index(fields=["organization", "-created_at"], name="ticket_org_created_idx"),
             models.Index(fields=["due_at", "sla_breached_at"], name="ticket_due_breached_idx"),
         ]

@@ -1,6 +1,7 @@
 import logging
 
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.viewsets import ModelViewSet
@@ -12,6 +13,7 @@ from apps.common.permissions import HasOrganization
 from apps.notifications.tasks import send_new_comment_notification
 from apps.realtime.broadcast import broadcast_comment
 
+from .filters import TicketFilter
 from .models import Category, SLAPolicy, Tag, Ticket
 from .selectors import accessible_tickets
 from .serializers import (
@@ -45,11 +47,14 @@ class SLAPolicyViewSet(OrganizationScopedMixin, ModelViewSet):
 
 
 class TicketViewSet(OrganizationScopedMixin, ModelViewSet):
-    queryset = Ticket.objects.select_related(
-        "organization", "category", "requester", "assignee"
-    ).prefetch_related("tags")
+    # No select_related: the serializer emits requester, assignee and category
+    # as bare ids, which are columns on the ticket row itself. Only tags live
+    # in another table, so they are prefetched in one extra query.
+    queryset = Ticket.objects.prefetch_related("tags")
     serializer_class = TicketSerializer
     permission_classes = [HasOrganization]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TicketFilter
 
     def get_queryset(self):
         # OrganizationScopedMixin already restricts this to the requester's org.
