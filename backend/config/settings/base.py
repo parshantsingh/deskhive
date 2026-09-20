@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "apps.tickets",
     "apps.notifications",
     "apps.realtime",
+    "apps.analytics",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -96,6 +97,17 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {"hosts": [REDIS_URL]},
+    },
+}
+
+# Django's cache framework on the same Redis server, but its own database
+# number: cache.clear() issues FLUSHDB, which must never be able to wipe the
+# Celery queue that lives in database 0.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("CACHE_URL", default="redis://localhost:6379/1"),
+        "KEY_PREFIX": "deskhive",
     },
 }
 
