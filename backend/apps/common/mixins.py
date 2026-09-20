@@ -8,7 +8,10 @@ class OrganizationScopedMixin:
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(organization=self.request.user.organization)
+        # organization_id, not organization: comparing against the id the user
+        # row already carries saves a query to load the Organization just to
+        # read its primary key back.
+        return queryset.filter(organization_id=self.request.user.organization_id)
 
     def perform_create(self, serializer):
         serializer.save(organization=self.request.user.organization)

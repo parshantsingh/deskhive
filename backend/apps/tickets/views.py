@@ -47,9 +47,10 @@ class SLAPolicyViewSet(OrganizationScopedMixin, ModelViewSet):
 
 
 class TicketViewSet(OrganizationScopedMixin, ModelViewSet):
-    queryset = Ticket.objects.select_related(
-        "organization", "category", "requester", "assignee"
-    ).prefetch_related("tags")
+    # No select_related: the serializer emits requester, assignee and category
+    # as bare ids, which are columns on the ticket row itself. Only tags live
+    # in another table, so they are prefetched in one extra query.
+    queryset = Ticket.objects.prefetch_related("tags")
     serializer_class = TicketSerializer
     permission_classes = [HasOrganization]
     filter_backends = [DjangoFilterBackend]
