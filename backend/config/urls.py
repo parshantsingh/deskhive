@@ -41,6 +41,7 @@ urlpatterns = [
     path("api/v1/health/", health_check, name="health-check"),
     path("api/v1/auth/", include("apps.accounts.urls")),
     path("api/v1/", include("apps.tickets.urls")),
+    path("api/v1/", include("apps.realtime.urls")),
     path(
         "api/docs/",
         schema_view.with_ui("swagger", cache_timeout=0),
