@@ -12,4 +12,6 @@ class HasOrganization(BasePermission):
     message = "Your account is not attached to an organization."
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.organization_id)
+        # is_authenticated first: an AnonymousUser has no organization_id at all,
+        # so reading it raised AttributeError (a 500) instead of a clean 401.
+        return bool(request.user and request.user.is_authenticated and request.user.organization_id)
