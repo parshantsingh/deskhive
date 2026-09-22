@@ -49,3 +49,7 @@ htmlcov/
 
 # Tooling
 .claude/
+
+# Local dev journal — per-commit tutorial notes for personal reference only,
+# never part of the shipped codebase.
+devlog/
