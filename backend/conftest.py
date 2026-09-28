@@ -45,13 +45,22 @@ def customer(org):
 
 @pytest.fixture(autouse=True)
 def _use_tmp_media_root(settings, tmp_path):
-    """Redirect file uploads to a throwaway directory during tests.
+    """Redirect file uploads to a throwaway local directory during tests,
+    instead of the real S3-compatible storage configured in STORAGES.
 
-    Without this, every test that uploads a file (Attachment) writes a real
-    file into the project's actual media/ folder, and pytest-django's
-    transaction rollback never cleans those up since they're on the
-    filesystem, not in the database.
+    Without the STORAGES override, every attachment test would need a real
+    LocalStack/S3 endpoint reachable, making the suite depend on outside
+    infrastructure for something that should be a fast, isolated unit test
+    (and CI has no such service running). Without MEDIA_ROOT pointing at a
+    throwaway directory, a test run against the real FileSystemStorage would
+    write real files into the project's actual media/ folder, which
+    pytest-django's transaction rollback never cleans up since they're on
+    the filesystem, not in the database.
     """
+    settings.STORAGES = {
+        **settings.STORAGES,
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    }
     settings.MEDIA_ROOT = tmp_path
 
 
