@@ -27,5 +27,30 @@ services:
       timeout: 5s
       retries: 5
 
+  # Emulates the real AWS S3 API locally, so attachment storage runs against
+  # the same STORAGES config and code path here as it will in production —
+  # only the endpoint URL and credentials differ. MinIO was the first choice,
+  # but both its official image and the Bitnami mirror now refuse anonymous
+  # Docker Hub pulls; LocalStack's own :latest tag also now refuses to start
+  # without a paid auth token. Pinned to 3.0, the last community-edition
+  # release that runs S3 unlicensed.
+  localstack:
+    image: localstack/localstack:3.0
+    restart: unless-stopped
+    environment:
+      SERVICES: s3
+      MEDIA_BUCKET_NAME: deskhive-media
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - ./localstack-init:/etc/localstack/init/ready.d
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   postgres_data:
+  localstack_data:
