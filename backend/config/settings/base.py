@@ -84,10 +84,38 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Local filesystem storage for now; swapped to S3 in Phase 8 by changing
-# STORAGES only — Attachment's model code does not need to change.
+# S3-compatible object storage for attachments. Locally this points at
+# LocalStack (infra/docker-compose.yml); in production it points at real
+# AWS S3 — only these values change, Attachment's own model/view code does
+# not. MEDIA_ROOT has no effect on this backend; it's kept only as the
+# target for the test-only FileSystemStorage override (see conftest.py).
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="deskhive-media")
+AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
+AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default="http://localhost:4566")
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID", default="test")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="test")
+# Path-style addressing (bucket in the URL path, not a subdomain) is what
+# LocalStack and most non-AWS S3 endpoints require; real AWS accepts it too,
+# so this is safe to leave on in production as well.
+AWS_S3_ADDRESSING_STYLE = "path"
+# Attachments are never public. Every URL django-storages generates is
+# presigned and expires — there is no separate "make this bucket public" step.
+AWS_QUERYSTRING_AUTH = True
+AWS_QUERYSTRING_EXPIRE = 3600
+AWS_DEFAULT_ACL = None
+AWS_S3_FILE_OVERWRITE = False
+
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
