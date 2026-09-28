@@ -10,3 +10,5 @@ channels-redis==4.3.0
 daphne==4.2.3
 redis==6.4.0
 django-filter==26.1
+django-storages==1.14.6
+boto3==1.35.99
